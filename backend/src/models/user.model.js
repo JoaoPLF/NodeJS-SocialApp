@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true, trim: true, lowercase: true },
   handle: { type: String, unique: true, required: true, trim: true },
   password: { type: String, required: true, trim: true },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  profileImage: { type: String, default: `blank-profile-image.png` }
 });
 
 userSchema.methods.validateEmail = function() {

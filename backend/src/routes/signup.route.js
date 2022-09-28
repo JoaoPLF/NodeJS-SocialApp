@@ -7,7 +7,7 @@ router.post("/", async (req, res) => {
   try {
     const { email, password, confirmPassword, handle } = req.body;
 
-    const user = await createUser(email, handle, password, confirmPassword);
+    const user = await createUser({ email, handle, password, confirmPassword });
     return res.send(user);
 
   }

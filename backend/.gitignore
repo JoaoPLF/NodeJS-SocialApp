@@ -1,2 +1,6 @@
 /node_modules
 .env
+
+# Ignore all images besides default
+/assets/profileImages/*
+!/assets/profileImages/blank-profile-image.png

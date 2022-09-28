@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
-const connectToDatabase = async () => {
+const connectToDatabase = () => {
   try {
-    await mongoose.connect("mongodb://localhost:27017/socialapp");
+    mongoose.connect(process.env.DB_URI);
   }
   catch (err) {
     console.error("Could not connect to database");

@@ -26,10 +26,10 @@ const checkUserExists = async (email, handle) => {
 };
 
 const generateToken = (user) => {
-  return jwt.sign({ user_id: user._id, email: user.email }, process.env.TOKEN_KEY);
+  return jwt.sign({ user_id: user._id, handle: user.handle }, process.env.TOKEN_KEY);
 };
 
-const createUser = async (email, handle, password, confirmPassword) => {
+exports.createUser = async ({ email, handle, password, confirmPassword }) => {
   try {
     if (!checkRequiredFields({ email, handle, password, confirmPassword })) {
       throw new ValidationError("Required fields are missing.");
@@ -65,7 +65,7 @@ const createUser = async (email, handle, password, confirmPassword) => {
   }
 };
 
-const loginUser = async (email, password) => {
+exports.loginUser = async ({ email, password }) => {
   try {
     if (!checkRequiredFields({ email, password })) {
       throw new ValidationError("Required fields are missing.");
@@ -84,4 +84,6 @@ const loginUser = async (email, password) => {
   }
 };
 
-module.exports = { createUser, loginUser };
+exports.setProfileImage = async (user, imagePath) => {
+  return await User.findOneAndUpdate({ handle: user.handle }, { profileImage: imagePath });
+};

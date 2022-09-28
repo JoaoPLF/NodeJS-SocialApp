@@ -1,27 +1,26 @@
 const Post = require("../models/post.model");
 const errorLogger = require("../utils/errorLogger");
+const ValidationError = require("../utils/ValidationError");
 
-const getAll = async () => {
+exports.getAllPosts = async () => {
   try {
     return await Post.find().sort({ createdAt: -1 });
   }
   catch (err) {
-    const message = "Could not get Posts";
-    errorLogger(message, err);
-    throw new Error(message);
+    errorLogger(err, "Could not get Posts");
   }
 };
 
-const createPost = async (userHandle, body) => {
+exports.createPost = async ({ userHandle, body }) => {
   try {
-    const newPost = new Post({ userHandle, body });
-    return await newPost.save();
+    if (body.trim() === "") {
+      throw new ValidationError("Post body must not be empty.");
+    }
+
+    const post = new Post({ userHandle, body });
+    return await post.save();
   }
   catch (err) {
-    const message = "Could not create Post";
-    errorLogger(message, err);
-    throw new Error(message);
+    errorLogger(err, "Could not create Post");
   }
-}
-
-module.exports = { getAll, createPost };
+};

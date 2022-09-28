@@ -7,44 +7,46 @@ const { createUser, loginUser } = require("../src/controllers/user.controller");
 const UserModel = require("../src/models/user.model");
 const ValidationError = require("../src/utils/ValidationError");
 
-before(async () => {
-  try {
-    await connectToDatabase();
-    await UserModel.deleteMany({});
-  }
-  catch (err) {
-    console.log(err);
-  }
-});
+const mockUser = require("./user.json");
+
+// before(async () => {
+//   try {
+//     await connectToDatabase();
+//     await UserModel.deleteMany({});
+//   }
+//   catch (err) {
+//     console.log(err);
+//   }
+// });
 
 describe("User", () => {
-  it("Collection should be empty", async () => {
+  it("Collection Users should be empty", async () => {
     const users = await UserModel.find();
     assert.isEmpty(users);
   });
 
   describe("Create User", () => {
-    it("should throw ValidationError", async () => {
+    it("should throw ValidationError for invalid email", async () => {
       try {
-        await createUser("test", "handle", "password", "password");
+        await createUser({ email: "test", handle: "handle", password: "password", confirmPassword: "password"});
       }
       catch (err) {
         assert.instanceOf(err, ValidationError);
       }
     });
 
-    it("should throw Error for missing fields", async () => {
+    it("should throw ValidationError for missing fields", async () => {
       try {
-        await createUser("test@test.com", "", "", "");
+        await createUser({ email: "test@test.com", handle: "", password: "", confirmPassword: ""});
       }
       catch (err) {
         assert.instanceOf(err, ValidationError);
       }
     });
 
-    it("should fail because password does not match confirmation", async () => {
+    it("should throw ValidationError because password does not match confirmation", async () => {
       try {
-        await createUser("test@test.com", "a", "123", "1");
+        await createUser({ email: "test@test.com", handle: "a", password: "123", confirmPassword: "1"});
       }
       catch (err) {
         assert.instanceOf(err, ValidationError);
@@ -53,7 +55,7 @@ describe("User", () => {
 
     it("should create a new user", async () => {
       try {
-        const user = await createUser("test@test.com", "a", "123", "123");
+        const user = await createUser({ ...mockUser });
         assert.isNotEmpty(user);
         assert.containsAllKeys(user, "token");
       }
@@ -62,9 +64,9 @@ describe("User", () => {
       }
     });
 
-    it("should fail to create an user that already exists", async () => {
+    it("should throw ValidationError when creating an user that already exists", async () => {
       try {
-        await createUser("test@test.com", "a", "123", "123");
+        await createUser({ ...mockUser });
       }
       catch (err) {
         assert.instanceOf(err, ValidationError);
@@ -73,9 +75,9 @@ describe("User", () => {
 
     it("should login the user", async () => {
       try {
-        const user = await loginUser("test@test.com", "123");
-        assert.isNotEmpty(user);
-        assert.containsAllKeys(user, "token");
+        const token = await loginUser({ email: mockUser.email, password: mockUser.password });
+        assert.isNotEmpty(token);
+        assert.containsAllKeys(token, "token");
       }
       catch (err) {
         throw err;
@@ -84,12 +86,12 @@ describe("User", () => {
   });
 });
 
-after(async () => {
-  try {
-    await UserModel.deleteMany({});
-    await disconnectFromDatabase();
-  }
-  catch (err) {
-    console.log(err);
-  }
-});
+// after(async () => {
+//   try {
+//     await UserModel.deleteMany({});
+//     await disconnectFromDatabase();
+//   }
+//   catch (err) {
+//     console.log(err);
+//   }
+// });

@@ -1,11 +1,11 @@
 const express = require("express");
-const posts = require("../controllers/post.controller");
+const { createPost, getAllPosts } = require("../controllers/post.controller");
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const result = await posts.getAll();
+    const result = await getAllPosts();
     return res.send(result);
   }
   catch (err) {
@@ -15,9 +15,11 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { userHandle, body } = req.body;
-    const newPost = await posts.createPost(userHandle, body);
-    return res.send(newPost);
+    const user = req.user;
+    const { body } = req.body;
+
+    const post = await createPost({ handle: user.handle, body });
+    return res.send(post);
   }
   catch (err) {
     return res.send({ error: err.message });

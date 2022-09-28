@@ -7,7 +7,7 @@ router.post("/", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await loginUser(email, password);
+    const user = await loginUser({ email, password });
     return res.send(user);
   }
   catch (err) {
