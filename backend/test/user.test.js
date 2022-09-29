@@ -1,27 +1,22 @@
 require("dotenv").config();
 const { assert } = require("chai");
-const { before, after } = require("mocha");
 
-const { connectToDatabase, disconnectFromDatabase } = require("../src/config/database.config");
-const { createUser, loginUser } = require("../src/controllers/user.controller");
 const UserModel = require("../src/models/user.model");
+
+const { createUser, loginUser, setUserDetails } = require("../src/controllers/user.controller");
+
 const ValidationError = require("../src/utils/ValidationError");
 
 const mockUser = require("./user.json");
 
-// before(async () => {
-//   try {
-//     await connectToDatabase();
-//     await UserModel.deleteMany({});
-//   }
-//   catch (err) {
-//     console.log(err);
-//   }
-// });
+const clearCollections = async () => {
+  await UserModel.deleteMany({});
+  return await UserModel.find();
+};
 
 describe("User", () => {
-  it("Collection Users should be empty", async () => {
-    const users = await UserModel.find();
+  it("should clear collections before tests", async () => {
+    const users = await clearCollections();
     assert.isEmpty(users);
   });
 
@@ -83,15 +78,28 @@ describe("User", () => {
         throw err;
       }
     });
+
+    it("should set user details", async () => {
+      try {
+        const bio = "Abc";
+
+        const user = await setUserDetails({
+          handle: mockUser.handle,
+          bio,
+        });
+
+        assert.equal(user.bio, bio);
+        assert.equal(user.website, "");
+        assert.equal(user.location, "");
+      }
+      catch (err) {
+        throw err;
+      }
+    });
+  });
+
+  it("should clear collections after tests", async () => {
+    const users = await clearCollections();
+    assert.isEmpty(users);
   });
 });
-
-// after(async () => {
-//   try {
-//     await UserModel.deleteMany({});
-//     await disconnectFromDatabase();
-//   }
-//   catch (err) {
-//     console.log(err);
-//   }
-// });

@@ -4,31 +4,36 @@ const { assert } = require("chai");
 
 const UserModel = require("../src/models/user.model");
 const PostModel = require("../src/models/post.model");
+const CommentModel = require("../src/models/comment.model");
+const ValidationError = require("../src/utils/ValidationError");
 
 const { createUser } = require("../src/controllers/user.controller");
-const { createPost, getAllPosts } = require("../src/controllers/post.controller");
-
-const ValidationError = require("../src/utils/ValidationError");
+const { getAllPosts, getPost, createPost } = require("../src/controllers/post.controller");
+const { createComment } = require("../src/controllers/comment.controller");
 
 const mockUser = require("./user.json");
 const mockPost = require("./post.json");
+const mockComment = require("./comment.json");
 
 const clearCollections = async () => {
   await UserModel.deleteMany({});
   await PostModel.deleteMany({});
-  return [await UserModel.find(), await PostModel.find()];
+  await CommentModel.deleteMany({});
+  return [await UserModel.find(), await PostModel.find(), await CommentModel.find()];
 };
 
-describe("Post", () => {
+describe("Comment", () => {
   it("should clear collections before tests", async () => {
     const collections = await clearCollections();
     assert.isEmpty(collections[0]);
     assert.isEmpty(collections[1]);
+    assert.isEmpty(collections[2]);
   });
 
-  describe("Create Post", () => {
+  describe("Create comment", () => {
     let token;
     let decode;
+    let postId;    
 
     it("should create a new user", async () => {
       try {
@@ -46,33 +51,41 @@ describe("Post", () => {
       assert.containsAllKeys(decode, "handle");
     });
 
-    it("should throw ValidationError because post body is empty", async () => {
-      try {
-        const post = await createPost({ userHandle: decode.handle, body: "" });
-      }
-      catch (err) {
-        assert.instanceOf(err, ValidationError);
-      }
-    });
-
     it("should create a new post", async () => {
       try {
-        const post = await createPost({ userHandle: decode.handle, body: mockPost.body });
+        const post = await createPost({ userHandle: decode.handle, ...mockPost });
+        postId = post._id;
 
-        assert.isNotEmpty(post);
-        assert.equal(post.body, mockPost.body);
+        assert.isNotNull(post);
       }
       catch (err) {
         throw err;
       }
     });
 
-    it("should get all posts", async () => {
+    it("should throw a ValidationError because the comment body is missing", async () => {
       try {
-        const posts = await getAllPosts();
+        const comment = await createComment({ userHandle: decode.handle, postId, body: "" });
+      }
+      catch (err) {
+        assert.instanceOf(err, ValidationError);
+      }
+    });
 
-        assert.isNotNull(posts);
-        assert.lengthOf(posts, 1);
+    it("should create a new comment", async () => {
+      try {
+        const comment = await createComment({ userHandle: decode.handle, postId, ...mockComment });
+        assert.equal(comment.body, mockComment.body);
+      }
+      catch (err) {
+        throw err;
+      }
+    });
+
+    it("should check if post has a comment", async () => {
+      try {
+        const post = await getPost(postId);
+        assert.isNotNull(post.comments);
       }
       catch (err) {
         throw err;
@@ -84,5 +97,6 @@ describe("Post", () => {
     const collections = await clearCollections();
     assert.isEmpty(collections[0]);
     assert.isEmpty(collections[1]);
+    assert.isEmpty(collections[2]);
   });
 });

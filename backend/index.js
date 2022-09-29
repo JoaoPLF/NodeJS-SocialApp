@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const rawBody = require("raw-body");
 const { connectToDatabase } = require("./src/config/database.config");
 
 const authMiddleware = require("./src/middleware/auth");
@@ -18,7 +17,7 @@ connectToDatabase();
 
 app.use("/signup", signup);
 app.use("/login", login);
-app.use("/posts", authMiddleware,posts);
+app.use("/posts", posts);
 app.use("/user", authMiddleware, user);
 
 app.listen(process.env.SERVER_PORT, () => {
