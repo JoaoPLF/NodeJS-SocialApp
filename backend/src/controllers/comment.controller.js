@@ -1,4 +1,5 @@
 const Comment = require("../models/comment.model");
+const Post = require("../models/post.model");
 const checkRequiredFields = require("../utils/checkRequiredFields");
 const errorLogger = require("../utils/errorLogger");
 const returnWithProfileImage = require("../utils/returnWithProfileImage");
@@ -8,7 +9,6 @@ exports.getComments = async (postId) => {
   try {
     const comments = await Comment.find({ postId }).sort({ createdAt: -1 });
     return await Promise.all(comments.map(returnWithProfileImage));
-    
   }
   catch (err) {
     errorLogger(err, "Could not get comments.");
@@ -23,6 +23,10 @@ exports.createComment = async ({ userHandle, postId, body }) => {
 
     const comment = new Comment({ userHandle, postId, body });
     await comment.save();
+
+    const post = await Post.findById(postId);
+    post.commentCount += 1;
+    await post.save();
 
     return await returnWithProfileImage(comment);
   }

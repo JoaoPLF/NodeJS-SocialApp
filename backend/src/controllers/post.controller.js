@@ -42,11 +42,3 @@ exports.createPost = async ({ userHandle, body }) => {
     errorLogger(err, "Could not create Post.");
   }
 };
-
-exports.likePost = async () => {
-
-};
-
-exports.unlikePost = async () => {
-
-};

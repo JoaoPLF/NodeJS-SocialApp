@@ -2,6 +2,7 @@ const express = require("express");
 const authMiddleware = require("../middleware/auth");
 const { createPost, getAllPosts, getPost } = require("../controllers/post.controller");
 const { createComment } = require("../controllers/comment.controller");
+const { likePost, unlikePost } = require("../controllers/like.controller");
 
 const router = express.Router();
 
@@ -54,12 +55,30 @@ router.post("/:postId/comment", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/:postId/like", authMiddleware, (req, res) => {
-  
+router.post("/:postId/like", authMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+
+    const post = await likePost({ userHandle: user.handle, postId });
+    return res.send(post);
+  }
+  catch (err) {
+    return res.send({ error: err.message });
+  }
 });
 
-router.post("/:postId/unlike", authMiddleware, (req, res) => {
+router.post("/:postId/unlike", authMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
 
+    const post = await unlikePost({ userHandle: user.handle, postId });
+    return res.send(post);
+  }
+  catch (err) {
+    return res.send({ error: err.message });
+  }
 });
 
 module.exports = router;

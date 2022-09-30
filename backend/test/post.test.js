@@ -4,9 +4,11 @@ const { assert } = require("chai");
 
 const UserModel = require("../src/models/user.model");
 const PostModel = require("../src/models/post.model");
+const LikeModel = require("../src/models/like.model");
 
 const { createUser } = require("../src/controllers/user.controller");
 const { createPost, getAllPosts } = require("../src/controllers/post.controller");
+const { likePost, unlikePost } = require("../src/controllers/like.controller");
 
 const ValidationError = require("../src/utils/ValidationError");
 
@@ -16,7 +18,8 @@ const mockPost = require("./post.json");
 const clearCollections = async () => {
   await UserModel.deleteMany({});
   await PostModel.deleteMany({});
-  return [await UserModel.find(), await PostModel.find()];
+  await LikeModel.deleteMany({});
+  return [await UserModel.find(), await PostModel.find(), await LikeModel.find()];
 };
 
 describe("Post", () => {
@@ -24,11 +27,13 @@ describe("Post", () => {
     const collections = await clearCollections();
     assert.isEmpty(collections[0]);
     assert.isEmpty(collections[1]);
+    assert.isEmpty(collections[2]);
   });
 
   describe("Create Post", () => {
     let token;
     let decode;
+    let post;
 
     it("should create a new user", async () => {
       try {
@@ -57,7 +62,7 @@ describe("Post", () => {
 
     it("should create a new post", async () => {
       try {
-        const post = await createPost({ userHandle: decode.handle, body: mockPost.body });
+        post = await createPost({ userHandle: decode.handle, body: mockPost.body });
 
         assert.isNotEmpty(post);
         assert.equal(post.body, mockPost.body);
@@ -78,11 +83,56 @@ describe("Post", () => {
         throw err;
       }
     });
+
+    it("should like a post", async () => {
+      try {
+        assert.equal(post.likeCount, 0);
+    
+        post = await likePost({ userHandle: decode.handle, postId: post._id });
+    
+        assert.equal(post.likeCount, 1);
+      }
+      catch (err) {
+        throw err;
+      }
+    });
+
+    it("should throw ValidationError because post is already liked by user", async () => {
+      try {    
+        const result = await likePost({ userHandle: decode.handle, postId: post._id });
+      }
+      catch (err) {
+        assert.instanceOf(err, ValidationError);
+      }
+    });
+
+    it("should unlike a post", async () => {
+      try {
+        assert.equal(post.likeCount, 1);
+    
+        post = await unlikePost({ userHandle: decode.handle, postId: post._id });
+    
+        assert.equal(post.likeCount, 0);
+      }
+      catch (err) {
+        throw err;
+      }
+    });
+
+    it("should throw ValidationError because post has not been liked by user", async () => {
+      try {    
+        const result = await unlikePost({ userHandle: decode.handle, postId: post._id });
+      }
+      catch (err) {
+        assert.instanceOf(err, ValidationError);
+      }
+    });
   });
 
   it("should clear collections after tests", async () => {
     const collections = await clearCollections();
     assert.isEmpty(collections[0]);
     assert.isEmpty(collections[1]);
+    assert.isEmpty(collections[2]);
   });
 });

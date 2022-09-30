@@ -86,6 +86,7 @@ describe("Comment", () => {
       try {
         const post = await getPost(postId);
         assert.isNotNull(post.comments);
+        assert.isAbove(post.commentCount, 0);
       }
       catch (err) {
         throw err;
