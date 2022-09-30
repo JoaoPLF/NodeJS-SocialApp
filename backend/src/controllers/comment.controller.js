@@ -1,11 +1,14 @@
 const Comment = require("../models/comment.model");
 const checkRequiredFields = require("../utils/checkRequiredFields");
 const errorLogger = require("../utils/errorLogger");
+const returnWithProfileImage = require("../utils/returnWithProfileImage");
 const ValidationError = require("../utils/ValidationError");
 
 exports.getComments = async (postId) => {
   try {
-    return await Comment.find({ postId }).sort({ createdAt: -1 });
+    const comments = await Comment.find({ postId }).sort({ createdAt: -1 });
+    return await Promise.all(comments.map(returnWithProfileImage));
+    
   }
   catch (err) {
     errorLogger(err, "Could not get comments.");
@@ -19,7 +22,9 @@ exports.createComment = async ({ userHandle, postId, body }) => {
     }
 
     const comment = new Comment({ userHandle, postId, body });
-    return await comment.save();
+    await comment.save();
+
+    return await returnWithProfileImage(comment);
   }
   catch (err) {
     errorLogger(err, "Could not create comment.");

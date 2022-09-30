@@ -54,4 +54,12 @@ router.post("/:postId/comment", authMiddleware, async (req, res) => {
   }
 });
 
+router.post("/:postId/like", authMiddleware, (req, res) => {
+  
+});
+
+router.post("/:postId/unlike", authMiddleware, (req, res) => {
+
+});
+
 module.exports = router;
