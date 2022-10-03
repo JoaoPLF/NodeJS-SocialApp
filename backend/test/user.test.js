@@ -1,24 +1,21 @@
 require("dotenv").config();
 const { assert } = require("chai");
+const { checkIfCollectionsCleared } = require("./utils");
 
 const UserModel = require("../src/models/user.model");
 
-const { createUser, loginUser, setUserDetails } = require("../src/controllers/user.controller");
+const { createUser, loginUser, setUserDetails, getUser } = require("../src/controllers/user.controller");
 
 const ValidationError = require("../src/utils/ValidationError");
 
 const mockUser = require("./user.json");
 
 const clearCollections = async () => {
-  await UserModel.deleteMany({});
-  return await UserModel.find();
+  await checkIfCollectionsCleared([UserModel]);
 };
 
 describe("User", () => {
-  it("should clear collections before tests", async () => {
-    const users = await clearCollections();
-    assert.isEmpty(users);
-  });
+  it("should clear collections before tests", clearCollections);
 
   describe("Create User", () => {
     it("should throw ValidationError for invalid email", async () => {
@@ -96,10 +93,13 @@ describe("User", () => {
         throw err;
       }
     });
+
+    it("should get user details", async () => {
+      const user = await getUser(mockUser.handle);
+
+      assert.containsAllKeys(user, ["email", "handle", "profileImage", "bio", "website", "location"]);
+    });
   });
 
-  it("should clear collections after tests", async () => {
-    const users = await clearCollections();
-    assert.isEmpty(users);
-  });
+  it("should clear collections after tests", clearCollections);
 });

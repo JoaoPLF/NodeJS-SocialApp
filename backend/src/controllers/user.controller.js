@@ -138,9 +138,15 @@ exports.setUserDetails = async ({ handle, bio, website, location }) => {
   }
 };
 
-exports.getAuthenticatedUser = async (handle) => {
+exports.getUser = async (handle) => {
   try {
-    return await User.findOne({ handle });
+    const user = await User.findOne({ handle });
+
+    if (!user) {
+      throw new ValidationError("User not found.");
+    }
+
+    return { ...user.toJSON() };
   }
   catch (err) {
     errorLogger(err, "Could not get user.");

@@ -3,8 +3,6 @@ const errorLogger = require("../utils/errorLogger");
 const ValidationError = require("../utils/ValidationError");
 const checkRequiredFields = require("../utils/checkRequiredFields");
 const returnWithProfileImage = require("../utils/returnWithProfileImage");
-const { getComments, deleteComments } = require("./comment.controller");
-const { deleteLikes } = require("./like.controller");
 
 exports.getAllPosts = async () => {
   try {
@@ -16,13 +14,22 @@ exports.getAllPosts = async () => {
   }
 };
 
+exports.getUserPosts = async (handle) => {
+  try {
+    const posts = await Post.find({ userHandle: handle }).sort({ createdAt: -1 });
+    return posts;
+  }
+  catch (err) {
+    errorLogger(err, "Could not get user posts.");
+  }
+};
+
 exports.getPost = async (postId) => {
   try {
     const post = await Post.findById(postId);
-    const comments = await getComments(postId);
     const postWithImage = await returnWithProfileImage(post);
 
-    return { ...postWithImage, comments };
+    return { ...postWithImage };
   }
   catch (err) {
     errorLogger(err, "Could not get post.");
@@ -51,8 +58,6 @@ exports.deletePost = async ({ userHandle, postId }) => {
       throw new ValidationError("Could not find post.");
     }
     else {
-      await deleteLikes(postId);
-      await deleteComments(postId);
       await post.delete();
 
       return { message: "Post deleted." };

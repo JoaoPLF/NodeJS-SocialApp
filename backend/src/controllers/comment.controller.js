@@ -4,6 +4,7 @@ const checkRequiredFields = require("../utils/checkRequiredFields");
 const errorLogger = require("../utils/errorLogger");
 const returnWithProfileImage = require("../utils/returnWithProfileImage");
 const ValidationError = require("../utils/ValidationError");
+const { createNotification, deleteNotification } = require("./notification.controller");
 
 exports.getComments = async (postId) => {
   try {
@@ -26,6 +27,15 @@ exports.createComment = async ({ userHandle, postId, body }) => {
 
     const post = await Post.findById(postId);
     post.commentCount += 1;
+
+    await createNotification({
+      postId,
+      sender: userHandle,
+      recipient: post.userHandle,
+      type: "comment",
+      createdAt: comment.createdAt
+    });
+
     await post.save();
 
     return await returnWithProfileImage(comment);
@@ -35,7 +45,36 @@ exports.createComment = async ({ userHandle, postId, body }) => {
   }
 };
 
-exports.deleteComments = async (postId) => {
+exports.deleteComment = async ({ userHandle, postId, commentId }) => {
+  try {
+    let comment = await Comment.findOne({ userHandle, postId, _id: commentId });
+
+    if (!comment) {
+      throw new ValidationError("Comment does not exist.");
+    }
+    else {
+      await comment.delete();
+  
+      const post = await Post.findById(postId);
+      post.commentCount -= 1;
+
+      await deleteNotification({
+        postId,
+        sender: userHandle,
+        recipient: post.userHandle,
+        type: "comment",
+        createdAt: comment.createdAt
+      });
+
+      return await post.save();
+    }
+  }
+  catch (err) {
+    errorLogger(err, "Could not delete comment.");
+  }
+};
+
+exports.deletePostComments = async (postId) => {
   try{
     await Comment.deleteMany({ postId });
   }

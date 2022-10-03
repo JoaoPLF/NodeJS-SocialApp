@@ -1,59 +1,52 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { assert } = require("chai");
+const { checkIfCollectionsCleared } = require("./utils");
 
 const UserModel = require("../src/models/user.model");
 const PostModel = require("../src/models/post.model");
 const CommentModel = require("../src/models/comment.model");
+const NotificationModel = require("../src/models/notification.model");
 const ValidationError = require("../src/utils/ValidationError");
 
 const { createUser } = require("../src/controllers/user.controller");
-const { getAllPosts, getPost, createPost } = require("../src/controllers/post.controller");
-const { createComment } = require("../src/controllers/comment.controller");
+const { getPost, createPost } = require("../src/controllers/post.controller");
+const { createComment, deleteComment } = require("../src/controllers/comment.controller");
 
 const mockUser = require("./user.json");
 const mockPost = require("./post.json");
 const mockComment = require("./comment.json");
 
+
 const clearCollections = async () => {
-  await UserModel.deleteMany({});
-  await PostModel.deleteMany({});
-  await CommentModel.deleteMany({});
-  return [await UserModel.find(), await PostModel.find(), await CommentModel.find()];
+  await checkIfCollectionsCleared([UserModel, PostModel, CommentModel, NotificationModel]);
 };
 
 describe("Comment", () => {
-  it("should clear collections before tests", async () => {
-    const collections = await clearCollections();
-    assert.isEmpty(collections[0]);
-    assert.isEmpty(collections[1]);
-    assert.isEmpty(collections[2]);
-  });
+  it("should clear collections before tests", clearCollections);
 
   describe("Create comment", () => {
-    let token;
-    let decode;
-    let postId;    
+    let user;
+    let postId;
+    let post;
+    let comment;
 
     it("should create a new user", async () => {
       try {
-        token = await createUser({ ...mockUser });
-        assert.isNotEmpty(token);
+        const token = await createUser({ ...mockUser });
         assert.containsAllKeys(token, "token");
+
+        user = jwt.verify(token.token, process.env.TOKEN_KEY);
+        assert.containsAllKeys(user, "handle");
       }
       catch (err) {
         throw err;
       }
     });
 
-    it("should get the user handle from token", () => {
-      decode = jwt.verify(token.token, process.env.TOKEN_KEY);
-      assert.containsAllKeys(decode, "handle");
-    });
-
     it("should create a new post", async () => {
       try {
-        const post = await createPost({ userHandle: decode.handle, ...mockPost });
+        const post = await createPost({ userHandle: user.handle, ...mockPost });
         postId = post._id;
 
         assert.isNotNull(post);
@@ -65,7 +58,7 @@ describe("Comment", () => {
 
     it("should throw a ValidationError because the comment body is missing", async () => {
       try {
-        const comment = await createComment({ userHandle: decode.handle, postId, body: "" });
+        const comment = await createComment({ userHandle: user.handle, postId, body: "" });
       }
       catch (err) {
         assert.instanceOf(err, ValidationError);
@@ -74,7 +67,7 @@ describe("Comment", () => {
 
     it("should create a new comment", async () => {
       try {
-        const comment = await createComment({ userHandle: decode.handle, postId, ...mockComment });
+        comment = await createComment({ userHandle: user.handle, postId, ...mockComment });
         assert.equal(comment.body, mockComment.body);
       }
       catch (err) {
@@ -84,7 +77,7 @@ describe("Comment", () => {
 
     it("should check if post has a comment", async () => {
       try {
-        const post = await getPost(postId);
+        post = await getPost(postId);
         assert.isNotNull(post.comments);
         assert.isAbove(post.commentCount, 0);
       }
@@ -92,12 +85,29 @@ describe("Comment", () => {
         throw err;
       }
     });
+
+    it("should delete the comment", async () => {
+      try {
+        assert.equal(post.commentCount, 1);
+    
+        post = await deleteComment({ userHandle: user.handle, postId: post._id, commentId: comment._id });
+    
+        assert.equal(post.commentCount, 0);
+      }
+      catch (err) {
+        throw err;
+      }
+    });
+
+    it("should throw ValidationError because post has not been liked by user", async () => {
+      try {    
+        const result = await deleteComment({ userHandle: user.handle, postId: post._id, commentId: comment._id });
+      }
+      catch (err) {
+        assert.instanceOf(err, ValidationError);
+      }
+    });
   });
 
-  it("should clear collections after tests", async () => {
-    const collections = await clearCollections();
-    assert.isEmpty(collections[0]);
-    assert.isEmpty(collections[1]);
-    assert.isEmpty(collections[2]);
-  });
+  it("should clear collections after tests", clearCollections);
 });

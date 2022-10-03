@@ -1,8 +1,8 @@
 const express = require("express");
 const authMiddleware = require("../middleware/auth");
 const { createPost, getAllPosts, getPost, deletePost } = require("../controllers/post.controller");
-const { createComment } = require("../controllers/comment.controller");
-const { likePost, unlikePost } = require("../controllers/like.controller");
+const { createComment, deleteComment, getComments, deletePostComments } = require("../controllers/comment.controller");
+const { likePost, unlikePost, deleteLikes } = require("../controllers/like.controller");
 
 const router = express.Router();
 
@@ -34,7 +34,9 @@ router.get("/:postId", async (req, res) => {
     const { postId } = req.params;
 
     const post = await getPost(postId);
-    return res.send(post);
+    const comments = await getComments(postId);
+
+    return res.send({ ...post, comments });
   }
   catch (err) {
     return res.send({ error: err.message });
@@ -46,6 +48,8 @@ router.delete("/:postId", authMiddleware, async (req, res) => {
     const user = req.user;
     const { postId } = req.params;
 
+    await deleteLikes(postId);
+    await deletePostComments(postId);
     const result = await deletePost({ userHandle: user.handle, postId });
 
     return res.send(result);
@@ -69,6 +73,15 @@ router.post("/:postId/comment", authMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/:postId/comment", authMiddleware, async (req, res) => {
+  const user = req.user;
+  const { postId } = req.params;
+  const { commentId } = req.body;
+
+  const post = await deleteComment({ userHandle: user.handle, postId, commentId });
+  return res.send(post);
+});
+
 router.post("/:postId/like", authMiddleware, async (req, res) => {
   try {
     const user = req.user;
@@ -82,7 +95,7 @@ router.post("/:postId/like", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/:postId/unlike", authMiddleware, async (req, res) => {
+router.delete("/:postId/like", authMiddleware, async (req, res) => {
   try {
     const user = req.user;
     const { postId } = req.params;

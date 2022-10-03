@@ -2,6 +2,7 @@ const Like = require("../models/like.model");
 const Post = require("../models/post.model");
 const errorLogger = require("../utils/errorLogger");
 const ValidationError = require("../utils/ValidationError");
+const { createNotification, deleteNotification } = require("./notification.controller");
 
 exports.likePost = async ({ userHandle, postId }) => {
   try {
@@ -16,6 +17,15 @@ exports.likePost = async ({ userHandle, postId }) => {
   
       const post = await Post.findById(postId);
       post.likeCount += 1;
+
+      await createNotification({
+        postId,
+        sender: userHandle,
+        recipient: post.userHandle,
+        type: "like",
+        createdAt: like.createdAt
+      });
+
       return await post.save();
     }
   }
@@ -36,6 +46,15 @@ exports.unlikePost = async ({ userHandle, postId }) => {
   
       const post = await Post.findById(postId);
       post.likeCount -= 1;
+
+      await deleteNotification({
+        postId,
+        sender: userHandle,
+        recipient: post.userHandle,
+        type: "like",
+        createdAt: like.createdAt
+      });
+
       return await post.save();
     }
   }
