@@ -9,9 +9,10 @@ What is currently working:
 **Backend**
  - [x] User signup and login
  - [x] Authorization
- - [x] Create Post
  - [x] Upload and retrieve user profile picture
+ - [x] Create Post
  - [x] Create Comments on posts
+ - [x] Like and unlike posts
  - [x] User tests
  - [x] Post tests
  - [x] Comment tests
