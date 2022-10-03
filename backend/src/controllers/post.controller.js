@@ -1,10 +1,10 @@
-const mongoose = require("mongoose");
 const Post = require("../models/post.model");
 const errorLogger = require("../utils/errorLogger");
 const ValidationError = require("../utils/ValidationError");
 const checkRequiredFields = require("../utils/checkRequiredFields");
 const returnWithProfileImage = require("../utils/returnWithProfileImage");
-const { getComments } = require("./comment.controller");
+const { getComments, deleteComments } = require("./comment.controller");
+const { deleteLikes } = require("./like.controller");
 
 exports.getAllPosts = async () => {
   try {
@@ -40,5 +40,25 @@ exports.createPost = async ({ userHandle, body }) => {
   }
   catch (err) {
     errorLogger(err, "Could not create Post.");
+  }
+};
+
+exports.deletePost = async ({ userHandle, postId }) => {
+  try {
+    const post = await Post.findOne({ _id: postId, userHandle });
+
+    if (!post) {
+      throw new ValidationError("Could not find post.");
+    }
+    else {
+      await deleteLikes(postId);
+      await deleteComments(postId);
+      await post.delete();
+
+      return { message: "Post deleted." };
+    }
+  }
+  catch (err) {
+    errorLogger(err, "Could not delete Post.");
   }
 };

@@ -43,3 +43,12 @@ exports.unlikePost = async ({ userHandle, postId }) => {
     errorLogger(err, "Could not like post.");
   }
 };
+
+exports.deleteLikes = async (postId) => {
+  try{
+    await Like.deleteMany({ postId });
+  }
+  catch (err) {
+    errorLogger(err, "Could not delete likes.");
+  }
+};

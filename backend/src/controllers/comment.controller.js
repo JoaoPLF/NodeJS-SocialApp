@@ -34,3 +34,12 @@ exports.createComment = async ({ userHandle, postId, body }) => {
     errorLogger(err, "Could not create comment.");
   }
 };
+
+exports.deleteComments = async (postId) => {
+  try{
+    await Comment.deleteMany({ postId });
+  }
+  catch (err) {
+    errorLogger(err, "Could not delete comments.");
+  }
+};

@@ -1,6 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middleware/auth");
-const { createPost, getAllPosts, getPost } = require("../controllers/post.controller");
+const { createPost, getAllPosts, getPost, deletePost } = require("../controllers/post.controller");
 const { createComment } = require("../controllers/comment.controller");
 const { likePost, unlikePost } = require("../controllers/like.controller");
 
@@ -35,6 +35,20 @@ router.get("/:postId", async (req, res) => {
 
     const post = await getPost(postId);
     return res.send(post);
+  }
+  catch (err) {
+    return res.send({ error: err.message });
+  }
+});
+
+router.delete("/:postId", authMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+
+    const result = await deletePost({ userHandle: user.handle, postId });
+
+    return res.send(result);
   }
   catch (err) {
     return res.send({ error: err.message });

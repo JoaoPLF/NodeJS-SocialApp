@@ -5,15 +5,18 @@ const { assert } = require("chai");
 const UserModel = require("../src/models/user.model");
 const PostModel = require("../src/models/post.model");
 const LikeModel = require("../src/models/like.model");
+const CommentModel = require("../src/models/comment.model");
 
 const { createUser } = require("../src/controllers/user.controller");
-const { createPost, getAllPosts } = require("../src/controllers/post.controller");
+const { createPost, getAllPosts, deletePost } = require("../src/controllers/post.controller");
 const { likePost, unlikePost } = require("../src/controllers/like.controller");
+const { createComment } = require("../src/controllers/comment.controller");
 
 const ValidationError = require("../src/utils/ValidationError");
 
 const mockUser = require("./user.json");
 const mockPost = require("./post.json");
+const mockComment = require("./comment.json");
 
 const clearCollections = async () => {
   await UserModel.deleteMany({});
@@ -125,6 +128,33 @@ describe("Post", () => {
       }
       catch (err) {
         assert.instanceOf(err, ValidationError);
+      }
+    });
+
+    it("should create a new comment", async () => {
+      try {
+        const comment = await createComment({ userHandle: decode.handle, postId: post._id, ...mockComment });
+        assert.equal(comment.body, mockComment.body);
+      }
+      catch (err) {
+        throw err;
+      }
+    });
+  
+    it("should delete the post", async () => {
+      try {
+        const result = await deletePost({ userHandle: decode.handle, postId: post._id });
+        const likes = await LikeModel.find({ postId: post._id });
+        const comments = await CommentModel.find({ postId: post._id });
+        post = await PostModel.findById(post._id);
+
+        assert.containsAllKeys(result, "message");
+        assert.isNull(post);
+        assert.lengthOf(likes, 0);
+        assert.lengthOf(comments, 0);
+      }
+      catch (err) {
+        throw err;
       }
     });
   });
