@@ -10,8 +10,8 @@ What is currently working:
  - [x] User signup and login
  - [x] Authorization
  - [x] Upload and retrieve user profile picture
- - [x] Create Post
- - [x] Create Comments on posts
+ - [x] Create and delete posts
+ - [x] Create and delete comments on posts
  - [x] Like and unlike posts
  - [x] User tests
  - [x] Post tests
