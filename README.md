@@ -1,5 +1,5 @@
 
-# React/NodeJS
+# NodeJS
 ### **SocialApp**
 
 Facebook-like social app project. Work in Progress
