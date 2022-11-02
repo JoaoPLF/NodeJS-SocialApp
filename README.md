@@ -2,7 +2,7 @@
 # NodeJS
 ### **SocialApp**
 
-Facebook-like social app project. Work in Progress
+Facebook/Twitter-like social app project. Work in Progress
 
 What is currently working:
 
